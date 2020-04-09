@@ -1,30 +1,40 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "QTE.h"
 
+//批量解包anm
+void extract_anm(char* dir_name) {
+	char result[MAX_CHAR_LEN] = { 0 };
+	char cmd[MAX_CHAR_LEN] = { 0 };
+	sprintf(cmd, "mkdir %s\\ANM", dir_name);
+	system(cmd);
+	sprintf(cmd, "dir /s/b %s\\*.anm > %s\\ANM\\anm_file_list.txt", dir_name, dir_name);
+	system(cmd);
+	printf("Get anm file list succeed.\n");
+	system("pause");
+}
 
 //移动dat解包出的文件
-
 void move_dat_file(char* dir_name) {
 	char cmd[MAX_CHAR_LEN] = { 0 };
-	char *extension[10] = {			//一定要移动的后缀
-	".anm",".rpy",".ecl",".jpg",".end",".sht",".wav",".std",".mid",".png"
+	//先批量移动再单个移动，提高效率
+	//批量移动
+	char *extension[EXTENSION_AMOUNT] = {
+	".anm",".rpy",".ecl",".jpg",".end",".sht",".wav",".std",".mid",".png",".msg"
 	};
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < EXTENSION_AMOUNT; i++) {
 		sprintf(cmd, "MOVE *%s %s", extension[i], dir_name);
 		system(cmd);
 	}
+	//单个移动
 	FILE *fp = fopen("dat_file_list.txt", "rt");
 	char line[MAX_CHAR_LEN] = { 0 };
 	char root[MAX_CHAR_LEN] = { 0 };
-	//int f = 0;
-	printf("批量移动完了，接下来是单个文件移动\n");
-	system("pause");
 	while (!feof(fp)) {
-		fscanf(fp, "%s", &line);
+		fgets(line, MAX_CHAR_LEN, fp);
+		//待定的格斗作dat解包
 		/*
-
 		for (int i = 0; i < MAX_CHAR_LEN && line[i] !='\0'; i++)																		//检测是否带有目录
-			if (line[i] == '/') {				//文件路径中的斜杠转换为反斜杠
+			if (line[i] == '/') {				//文件路径中的全部斜杠转换为反斜杠
 				line[i] = '\\';
 				f = 1;
 			}
@@ -53,13 +63,15 @@ void move_dat_file(char* dir_name) {
 		*/
 		if (line[0] != 'D') {
 			bool need_move = TRUE;
-			for (int i = 0; i < 10; i++) {
-				if (strstr(line, extension[i]) != NULL) {
+			for (int i = 0; i < EXTENSION_AMOUNT; i++) {
+				if (strstr(line, extension[i])) {
 					need_move = FALSE;
 					break;
 				}
 			}
 			if (need_move) {
+				char *find;
+				if (find = strchr(line, '\n')) *find = '\0';		//去掉fgets获取到的换行符
 				sprintf(cmd, "MOVE %s %s", line, dir_name);
 				system(cmd);
 			}
@@ -67,22 +79,21 @@ void move_dat_file(char* dir_name) {
 
 	}
 	fclose(fp);
-	printf("Extract dat file succeed.\n");
-	system("pause");
-
+	system("cls");
 }
 
-//解包dat
+//解包dat文件
 void extract_dat(char* dat_name) {
 	char dir_name[MAX_CHAR_LEN] = { 0 };
 	char cmd[MAX_CHAR_LEN] = { 0 };
-	strcpy(dir_name, dat_name);
-	dir_name[4] = '_';
+	get_dir_name(dat_name, dir_name);
 	sprintf(cmd, "mkdir %s", dir_name);
 	system(cmd);
 	sprintf(cmd, "thdat.exe -x d %s > dat_file_list.txt", dat_name);
 	system(cmd);
 	move_dat_file(dir_name);
+	printf("Extract dat file succeed.\n");
+	system("pause");
 }
 
 //执行cmd命令并获取结果
@@ -103,16 +114,13 @@ int execmd(char* cmd, char* result) {
 //获取文件名
 void get_dat_name(char* dat_name) {
 	char result[MAX_CHAR_LEN] = { 0 };
-	int head = 0;
 	printf("result=");
 	execmd("dir /s/b th??.dat", result);
 	printf(result);
-	for (int i = 0; i < MAX_CHAR_LEN && result[i] != '\0'; i++)
-		if (result[i] == '\\') head = i;
-	for (int i = 0; i < 8; i++) {
-		head++;
-		dat_name[i] = result[head];
-	}
+	char *find;
+	find = strrchr(result, '\\');
+	strcpy(dat_name, ++find);
+	if (find = strchr(dat_name, '\n')) *find = '\0';
 	printf("dat_name=%s", dat_name);
 	if (dat_name[0] != 't') {					//找不到thxx.dat文件
 		printf("FILE NOT FOUND!\n");
@@ -123,12 +131,18 @@ void get_dat_name(char* dat_name) {
 	system("pause");
 }
 
+void get_dir_name(char* dat_name, char* dir_name) {
+	strcpy(dir_name, dat_name);
+	char *find;
+	if (find = strchr(dir_name, '.')) *find = '_';
+}
+
 int main() {
 	char dat_name[MAX_CHAR_LEN] = { 0 };
+	char dir_name[MAX_CHAR_LEN] = { 0 };
 	get_dat_name(dat_name);
 	extract_dat(dat_name);
-	printf("没\n");
-	system("pause");
-
+	get_dir_name(dat_name, dir_name);
+	extract_anm(dir_name);
 	return 0;
 }
