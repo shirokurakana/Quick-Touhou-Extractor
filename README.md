@@ -31,7 +31,7 @@
 QTE能够识别的游戏版本编号和支持信息可以查看下表。
 
 QTE编号 | 游戏名 | 自动模式 | 手动模式 |备注
-:-: | :-: | :-: | :-: | :-: | :-:
+:-: | :-: | :-: | :-: | :-: 
 | 1 | 东方灵异传 ～ Highly Responsive to Prayers. | 否 | 未知 | 没试过 |
 | 2 | 东方封魔录 ～ the Story of Eastern Wonderland. | 否 | 未知 | 没试过 |
 | 3 | 东方梦时空 ～ Phantasmagoria of Dim. Dream. |否 | 未知 | 没试过 |
