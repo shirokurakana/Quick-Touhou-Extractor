@@ -1,9 +1,19 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "QTE.h"
 
-//批量解包anm
-void extract_anm(char* dir_name) {
+//解包单个anm文件
+void ExtractSingleAnm(char* anm_name, char* dir_name) {
+
+}
+
+//批量解包anm文件
+void ExtractAllAnm(char* dir_name) {
 	char result[MAX_CHAR_LEN] = { 0 };
+	
+}
+
+//得到anm文件列表
+void GetAnmFile(char* dir_name) {
 	char cmd[MAX_CHAR_LEN] = { 0 };
 	sprintf(cmd, "mkdir %s\\ANM", dir_name);
 	system(cmd);
@@ -14,7 +24,7 @@ void extract_anm(char* dir_name) {
 }
 
 //移动dat解包出的文件
-void move_dat_file(char* dir_name) {
+void MoveDatFile(char* dir_name) {
 	char cmd[MAX_CHAR_LEN] = { 0 };
 	//先批量移动再单个移动，提高效率
 	//批量移动
@@ -83,15 +93,26 @@ void move_dat_file(char* dir_name) {
 }
 
 //解包dat文件
-void extract_dat(char* dat_name) {
+void ExtractDat(char* dat_name, int game_ver) {
 	char dir_name[MAX_CHAR_LEN] = { 0 };
 	char cmd[MAX_CHAR_LEN] = { 0 };
-	get_dir_name(dat_name, dir_name);
+	GetDirName(dat_name, dir_name);
 	sprintf(cmd, "mkdir %s", dir_name);
 	system(cmd);
-	sprintf(cmd, "thdat.exe -x d %s > dat_file_list.txt", dat_name);
+	if (!game_ver) {				//未指定游戏版本
+		sprintf(cmd, "thdat.exe -x d %s > dat_file_list.txt", dat_name);
+	}
+	else{
+		sprintf(cmd, "thdat.exe -x %d %s > dat_file_list.txt", game_ver, dat_name);
+	}
 	system(cmd);
-	move_dat_file(dir_name);
+	MoveDatFile(dir_name);
+	if (dat_path[0] != '\0') {					//若在其他路径，则移回去
+		sprintf(cmd, "xcopy /e /y %s %s\\%s\\", dir_name, dat_path, dir_name);
+		system(cmd);
+		sprintf(cmd, "xcopy /y dat_file_list.txt %s\\", dat_path);
+		system(cmd);
+	}
 	printf("Extract dat file succeed.\n");
 	system("pause");
 }
@@ -111,38 +132,64 @@ int execmd(char* cmd, char* result) {
 	return 0;
 }
 
-//获取文件名
-void get_dat_name(char* dat_name) {
+//获取dat文件名
+int GetDatName(char* dat_name) {
 	char result[MAX_CHAR_LEN] = { 0 };
-	printf("result=");
 	execmd("dir /s/b th??.dat", result);
-	printf(result);
 	char *find;
-	find = strrchr(result, '\\');
-	strcpy(dat_name, ++find);
-	if (find = strchr(dat_name, '\n')) *find = '\0';
-	printf("dat_name=%s", dat_name);
-	if (dat_name[0] != 't') {					//找不到thxx.dat文件
-		printf("FILE NOT FOUND!\n");
+	if (find = strrchr(result, '\\')) {
+		strcpy(dat_name, ++find);
+		if (find = strchr(dat_name, '\n')) *find = '\0';
+		//printf("result=%s", result);
+		printf("dat_name=%s\n", dat_name);
 		system("pause");
-		exit(0);
+		return 1;
 	}
-	else printf("\n");
-	system("pause");
+	return 0;
 }
 
-void get_dir_name(char* dat_name, char* dir_name) {
+int GetDatFull(char* dat_name) {
+	char dat_full[MAX_CHAR_LEN] = { 0 };
+	char cmd[MAX_CHAR_LEN] = { 0 };
+	int version = 0;
+	gets(dat_full);
+	char *find;
+	if (find = strrchr(dat_full, '>')) {			//指定了游戏版本
+		*find = '\0';
+		version = atoi(++find);
+	}
+	sprintf(cmd, "xcopy /y %s \"%%cd%%\" > NUL", dat_full);
+	system(cmd);
+	find = strrchr(dat_full, '\\');
+	*find = '\0';
+	strcpy(dat_name, ++find);
+	printf("dat_name=%s\n", dat_name);
+	strcpy(dat_path, dat_full);
+	printf("dat_path=%s\n", dat_path);
+	return version;
+}
+
+//文件名转换为路径名
+void GetDirName(char* dat_name, char* dir_name) {
 	strcpy(dir_name, dat_name);
 	char *find;
-	if (find = strchr(dir_name, '.')) *find = '_';
+	if (find = strrchr(dir_name, '.')) *find = '_';
 }
 
 int main() {
+	int game_ver = 0;
 	char dat_name[MAX_CHAR_LEN] = { 0 };
 	char dir_name[MAX_CHAR_LEN] = { 0 };
-	get_dat_name(dat_name);
-	extract_dat(dat_name);
-	get_dir_name(dat_name, dir_name);
-	extract_anm(dir_name);
+	char cmd[MAX_CHAR_LEN] = { 0 };
+	if (!GetDatName(dat_name)) {
+		system("cls");
+		game_ver = GetDatFull(dat_name);
+		printf("game_ver=%d\n", game_ver);
+		system("pause");
+	}
+	ExtractDat(dat_name, game_ver);
+	//GetDirName(dat_name, dir_name);
+	//GetAnmFile(dir_name);
+	//ExtractAllAnm(dir_name);
 	return 0;
 }

@@ -9,9 +9,11 @@
 #define EXTENSION_AMOUNT 11
 typedef int bool;
 
-void get_dat_name(char* dat_name);
-void get_dir_name(char* dat_name, char* dir_name);
+char dat_path[MAX_CHAR_LEN] = { 0 };
+
+int GetDatName(char* dat_name);
+void GetDirName(char* dat_name, char* dir_name);
 int execmd(char* cmd, char* result);
-void extract_dat(char* dat_name);
-void move_dat_file(char* dir_name);
-void extract_anm(char* dir_name);
+void ExtractDat(char* dat_name, int game_ver);
+void MoveDatFile(char* dir_name);
+void ExtractAllAnm(char* dir_name);
